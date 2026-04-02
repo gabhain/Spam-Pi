@@ -11,6 +11,7 @@ A unified tool for Raspberry Pi to perform both BLE proximity spamming and WiFi 
   - **BLE Only**: Cycles through all proximity payloads (Apple, Android, Samsung).
   - **WiFi Only**: Broadcasts common public SSIDs.
   - **BOTH**: Runs both BLE and WiFi spamming in parallel using multi-threading.
+- **WiFi Deauther**: Scan for nearby Access Points and launch deauthentication attacks to disconnect clients.
 - **Customization**: Pick specific Apple, Android, or Samsung payloads, or create custom WiFi SSID lists.
 - **Auto-Cleanup**: Automatically stops advertising and restores WiFi to "managed" mode on exit (Ctrl+C).
 - **Multi-threaded**: Optimized for concurrent operations without performance loss.

