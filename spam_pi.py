@@ -360,7 +360,8 @@ def main():
 
         try:
             if choice == '1' and TUI_ENABLED and wifi:
-                wifi.start_recon(karma=True); if ble: ble.start_scan()
+                wifi.start_recon(karma=True)
+                if ble: ble.start_scan()
                 with Live(generate_dashboard(wifi, hci_id), refresh_per_second=1) as live:
                     while True: live.update(generate_dashboard(wifi, hci_id)); time.sleep(1)
             elif choice == '2' and wifi:
