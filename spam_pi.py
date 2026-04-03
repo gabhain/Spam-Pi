@@ -227,8 +227,9 @@ class WiFiSpammer:
                     elt = elt.payload.getlayer(Dot11Elt)
                 if b not in self.discovered_aps:
                     self.discovered_aps[b] = WiFiAP(b, ssid, ch)
-                    print(f"  [+] AP Found: {ssid} ({b}) [Ch {ch}]")
-
+                    ts = datetime.now().strftime('%H:%M:%S')
+                    print(f"  [{ts}] [+] AP Found: {ssid} ({b}) [Ch {ch}]")
+            
             # Client Tracking
             if pkt.haslayer(Dot11) and pkt.type == 2:
                 ds = pkt.FCfield & 2
@@ -241,7 +242,8 @@ class WiFiSpammer:
                 if bssid in self.discovered_aps:
                     if client not in self.discovered_aps[bssid].clients:
                         self.discovered_aps[bssid].clients.add(client)
-                        print(f"  [+] Client: {client} ({get_vendor(client)}) -> {self.discovered_aps[bssid].ssid}")
+                        ts = datetime.now().strftime('%H:%M:%S')
+                        print(f"  [{ts}] [+] Client: {client} ({get_vendor(client)}) -> {self.discovered_aps[bssid].ssid}")
             if pkt.haslayer(Dot11ProbeReq):
                 elt = pkt.getlayer(Dot11Elt)
                 if elt and elt.ID == 0:
