@@ -35,7 +35,7 @@ os.makedirs(LOG_DIR, exist_ok=True)
 HANDSHAKE_FILE = os.path.join(LOG_DIR, "handshakes.pcap")
 PROBE_LOG = os.path.join(LOG_DIR, "probes.log")
 
-# --- OUI Lookup (Common Vendors) ---
+# --- OUI Lookup (Expanded common vendors) ---
 VENDORS = {
     "00:03:93": "Apple", "00:05:02": "Apple", "00:0A:27": "Apple", "00:0A:95": "Apple",
     "00:10:FA": "Apple", "00:11:24": "Apple", "00:14:51": "Apple", "00:16:CB": "Apple",
@@ -44,18 +44,56 @@ VENDORS = {
     "00:23:12": "Apple", "00:23:32": "Apple", "00:23:6C": "Apple", "00:24:36": "Apple",
     "00:25:00": "Apple", "00:25:4B": "Apple", "00:26:08": "Apple", "00:26:4A": "Apple",
     "00:26:B0": "Apple", "18:AF:61": "Apple", "F0:D1:A9": "Apple", "E4:E4:AB": "Apple",
+    "7C:D1:C3": "Apple", "8C:85:90": "Apple", "A4:D1:8C": "Apple", "BC:92:6B": "Apple",
     "00:15:99": "Samsung", "00:16:32": "Samsung", "00:17:D4": "Samsung", "00:17:E2": "Samsung",
     "00:12:FB": "Samsung", "00:00:F0": "Samsung", "AC:5F:3E": "Samsung", "24:F5:AA": "Samsung",
+    "38:2D:E8": "Samsung", "48:5A:3F": "Samsung", "50:85:69": "Samsung", "60:AF:6D": "Samsung",
     "00:13:E8": "Intel", "00:19:D1": "Intel", "00:1B:21": "Intel", "00:1C:BF": "Intel",
     "00:1E:64": "Intel", "00:21:5C": "Intel", "00:21:6A": "Intel", "00:23:14": "Intel",
-    "D0:50:99": "ASRock", "BC:5F:F4": "ASRock",
-    "00:25:9C": "Cisco", "00:26:0B": "Cisco", "00:26:51": "Cisco", "00:26:98": "Cisco"
+    "D0:50:99": "ASRock", "BC:5F:F4": "ASRock", "00:25:9C": "Cisco", "00:26:0B": "Cisco",
+    "00:26:51": "Cisco", "00:26:98": "Cisco", "00:14:22": "Dell", "00:15:C5": "Dell",
+    "00:18:8B": "Dell", "00:1A:A0": "Dell", "00:1D:09": "Dell", "00:21:70": "Dell",
+    "00:23:AE": "Dell", "00:25:64": "Dell", "00:17:08": "HP", "00:18:71": "HP",
+    "00:1A:4B": "HP", "00:1B:78": "HP", "00:1E:0B": "HP", "00:21:5A": "HP",
+    "00:22:64": "HP", "00:23:47": "HP", "00:24:81": "HP", "00:25:B3": "HP",
+    "00:26:55": "HP", "00:04:23": "Intel", "00:0C:F1": "Intel", "00:13:02": "Intel",
+    "00:15:00": "Intel", "00:16:6F": "Intel", "00:16:EA": "Intel", "00:18:DE": "Intel",
+    "00:19:70": "Intel", "00:1A:11": "Intel", "00:1B:77": "Intel", "00:1C:23": "Intel",
+    "00:1D:E0": "Intel", "00:1E:65": "Intel", "00:21:5D": "Intel", "00:22:FA": "Intel",
+    "00:24:D6": "Intel", "00:24:D7": "Intel", "00:27:0E": "Intel", "00:27:10": "Intel",
+    "00:0B:AD": "Microsoft", "00:12:5A": "Microsoft", "00:15:5D": "Microsoft",
+    "00:17:FA": "Microsoft", "00:1D:D8": "Microsoft", "00:22:48": "Microsoft",
+    "00:25:22": "Microsoft", "00:03:7F": "Atheros", "00:08:E3": "Atheros",
+    "00:13:74": "Atheros", "00:1B:B1": "Atheros", "00:03:2F": "GlobalTop",
+    "00:0E:8E": "ASUS", "00:11:D8": "ASUS", "00:15:AF": "ASUS", "00:17:31": "ASUS",
+    "00:18:F3": "ASUS", "00:1B:FC": "ASUS", "00:1E:8C": "ASUS", "00:23:54": "ASUS",
+    "00:24:8C": "ASUS", "00:26:18": "ASUS", "00:0C:41": "Linksys", "00:0F:66": "Linksys",
+    "00:13:10": "Linksys", "00:14:BF": "Linksys", "00:18:39": "Linksys", "00:1D:7E": "Linksys",
+    "00:21:29": "Linksys", "00:22:6B": "Linksys", "00:23:69": "Linksys", "00:25:9C": "Linksys",
+    "00:09:5B": "Netgear", "00:0F:B5": "Netgear", "00:14:6C": "Netgear", "00:18:4D": "Netgear",
+    "00:1B:2F": "Netgear", "00:1E:2A": "Netgear", "00:1F:33": "Netgear", "00:22:3F": "Netgear",
+    "00:24:B2": "Netgear", "00:26:F2": "Netgear", "00:14:D1": "TP-Link", "00:19:E0": "TP-Link",
+    "00:21:27": "TP-Link", "00:23:CD": "TP-Link", "00:25:86": "TP-Link", "00:27:19": "TP-Link",
+    "10:FE:ED": "TP-Link", "14:CC:20": "TP-Link", "18:A6:F7": "TP-Link", "30:B5:C2": "TP-Link",
+    "00:0D:0B": "Sony", "00:13:15": "Sony", "00:13:A9": "Sony", "00:15:C1": "Sony",
+    "00:19:C5": "Sony", "00:1B:D7": "Sony", "00:1D:BA": "Sony", "00:1E:45": "Sony",
+    "00:1F:A7": "Sony", "00:24:33": "Sony", "00:24:C3": "Sony", "00:25:4E": "Sony",
+    "00:02:C1": "Ericsson", "00:0AD:D9": "Ericsson", "00:12:F0": "Ericsson",
+    "00:15:E1": "Ericsson", "00:16:20": "Ericsson", "00:18:13": "Ericsson",
+    "00:19:63": "Ericsson", "00:1B:66": "Ericsson", "00:1E:A6": "Ericsson",
+    "00:21:0E": "Ericsson", "00:24:9F": "Ericsson", "00:25:B5": "Ericsson",
+    "00:04:4B": "NVIDIA", "00:09:5B": "NVIDIA", "00:1E:8C": "ASUS", "00:1B:11": "D-Link",
+    "00:1C:F0": "D-Link", "00:1E:58": "D-Link", "00:21:91": "D-Link", "00:22:B0": "D-Link",
+    "00:24:01": "D-Link", "00:26:5A": "D-Link", "00:0B:86": "Aruba", "00:1A:1E": "Aruba"
 }
 
 def get_vendor(mac):
-    prefix = mac.upper().replace(':', '')[:6]
-    formatted_prefix = ":".join([prefix[i:i+2] for i in range(0, 6, 2)])
-    return VENDORS.get(formatted_prefix, "Unknown")
+    try:
+        prefix = mac.upper().replace(':', '')[:6]
+        formatted_prefix = ":".join([prefix[i:i+2] for i in range(0, 6, 2)])
+        return VENDORS.get(formatted_prefix, "Unknown")
+    except:
+        return "Unknown"
 
 # --- BLE Payloads ---
 APPLE_DEVICES = {
@@ -124,7 +162,7 @@ def get_wifi_devices():
 class BLEDevice:
     def __init__(self, mac, name):
         self.mac = mac
-        self.name = name
+        self.name = name if name and "(unknown)" not in name.lower() else "Unnamed BLE Device"
         self.vendor = get_vendor(mac)
         self.last_seen = time.time()
 
@@ -292,10 +330,20 @@ class PiBLESpan:
             for line in proc.stdout:
                 if not self.is_running:
                     break
-                parts = line.strip().split(' ')
-                if len(parts) >= 2:
-                    mac, name = parts[0], " ".join(parts[1:])
-                    if self.parent_wifi:
+                line = line.strip()
+                if not line or "LE Scan..." in line:
+                    continue
+                parts = line.split(' ', 1)
+                mac = parts[0]
+                name = parts[1] if len(parts) > 1 else ""
+                
+                if self.parent_wifi:
+                    if mac in self.parent_wifi.ble_devices:
+                        # Only update if we have a better name than current
+                        current_name = self.parent_wifi.ble_devices[mac].name
+                        if name and "(unknown)" not in name.lower() and ("Unnamed" in current_name or "(unknown)" in current_name.lower()):
+                            self.parent_wifi.ble_devices[mac].name = name
+                    else:
                         self.parent_wifi.ble_devices[mac] = BLEDevice(mac, name)
         finally:
             proc.terminate()
